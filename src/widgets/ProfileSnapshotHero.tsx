@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useSnapshot } from "@/data/useSnapshot";
 import { formatDateLong, formatFull, formatCompact } from "@/domain/analytics";
 import { Skeleton, VerifiedIcon } from "@/design-system/primitives";
+import { Avatar } from "./Avatar";
 
 /**
  * The cover page of the report (§ Phase 4 brief): identity before analytics.
@@ -26,21 +27,12 @@ export function ProfileSnapshotHero({ handle }: { handle: string }) {
       }}
     >
       <div className="flex items-start gap-5 md:items-center md:gap-7">
-        {/* profile picture — seeded gradient treatment in dev; photo with live data */}
-        <div
-          className="flex size-16 shrink-0 items-center justify-center rounded-full text-2xl font-semibold text-white shadow-card md:size-24 md:text-4xl"
-          style={
-            profile
-              ? {
-                  background: `linear-gradient(140deg,
-                    hsl(${profile.avatarHue} 55% 55%),
-                    hsl(${(profile.avatarHue + 45) % 360} 60% 42%))`,
-                }
-              : { background: "var(--ds-surface-2)" }
-          }
-        >
-          {handle.charAt(0).toUpperCase()}
-        </div>
+        <Avatar
+          handle={handle}
+          hue={profile?.avatarHue}
+          url={profile?.avatarUrl}
+          className="size-16 text-2xl shadow-card md:size-24 md:text-4xl"
+        />
 
         <div className="min-w-0 flex-1">
           {profile ? (

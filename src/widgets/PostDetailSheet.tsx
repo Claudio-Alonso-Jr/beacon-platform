@@ -9,7 +9,6 @@ import {
   type PostAnalytics,
 } from "@/domain/analytics";
 import {
-  Button,
   CloseIcon,
   CommentIcon,
   EyeIcon,
@@ -95,7 +94,12 @@ export function PostDetailSheet({ post, onClose, engine, postAnalytics }: PostDe
               </button>
             </div>
 
-            <PostThumbnail hue={post.thumbnailHue} type={post.type} className="aspect-square w-full" />
+            <PostThumbnail
+              hue={post.thumbnailHue}
+              type={post.type}
+              url={post.thumbnailUrl}
+              className="aspect-square w-full"
+            />
 
             <p className="mt-5 text-[15px] leading-relaxed text-ink">{post.caption}</p>
 
@@ -112,10 +116,10 @@ export function PostDetailSheet({ post, onClose, engine, postAnalytics }: PostDe
               </div>
             )}
 
-            {/* metrics */}
+            {/* metrics — absent metrics show an honest em dash */}
             <div className="mt-6 grid grid-cols-3 gap-3">
-              <SheetMetric icon={<HeartIcon size={15} />} label="Likes" value={post.metrics.likes.value} />
-              <SheetMetric icon={<CommentIcon size={15} />} label="Comments" value={post.metrics.comments.value} />
+              <SheetMetric icon={<HeartIcon size={15} />} label="Likes" value={post.metrics.likes?.value} />
+              <SheetMetric icon={<CommentIcon size={15} />} label="Comments" value={post.metrics.comments?.value} />
               <SheetMetric
                 icon={<EyeIcon size={15} />}
                 label="Views"
@@ -158,9 +162,14 @@ export function PostDetailSheet({ post, onClose, engine, postAnalytics }: PostDe
 
             <div className="flex-1" />
 
-            <Button variant="secondary" className="mt-8 w-full" disabled title="Live post links arrive with real providers">
+            <a
+              href={post.permalink}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-8 inline-flex h-10 w-full items-center justify-center gap-2 rounded-control bg-surface-2 text-sm font-medium text-ink transition-colors hover:bg-surface-2/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
               Open on Instagram ↗
-            </Button>
+            </a>
           </motion.aside>
         </>
       )}

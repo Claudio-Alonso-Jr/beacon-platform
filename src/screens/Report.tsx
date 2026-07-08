@@ -10,6 +10,7 @@ import {
 } from "@/domain/analytics";
 import { Button, DashboardSection, Skeleton, VerifiedIcon } from "@/design-system/primitives";
 import { DASHBOARD_SECTIONS, widgetsForSection } from "@/widgets/registry";
+import { Avatar } from "@/widgets/Avatar";
 
 const RANGE_LABEL: Record<TimeRange, string> = {
   "7d": "Last 7 days",
@@ -60,20 +61,12 @@ export function Report() {
           </div>
 
           <div className="mt-10 flex items-center gap-6">
-            <div
-              className="flex size-20 shrink-0 items-center justify-center rounded-full text-3xl font-semibold text-white"
-              style={
-                profile
-                  ? {
-                      background: `linear-gradient(140deg,
-                        hsl(${profile.avatarHue} 55% 55%),
-                        hsl(${(profile.avatarHue + 45) % 360} 60% 42%))`,
-                    }
-                  : { background: "var(--ds-surface-2)" }
-              }
-            >
-              {handle.charAt(0).toUpperCase()}
-            </div>
+            <Avatar
+              handle={handle}
+              hue={profile?.avatarHue}
+              url={profile?.avatarUrl}
+              className="size-20 text-3xl"
+            />
             <div className="min-w-0">
               {profile ? (
                 <>

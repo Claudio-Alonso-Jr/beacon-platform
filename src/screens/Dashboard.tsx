@@ -2,8 +2,11 @@ import { Suspense, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button, DashboardSection, SegmentedControl, Skeleton } from "@/design-system/primitives";
 import { TIME_RANGES, useDashboardStore } from "@/stores/dashboard";
+import { useSnapshot } from "@/data/useSnapshot";
+import type { ProviderErrorCode } from "@/data/scraper";
 import { DASHBOARD_SECTIONS, widgetsForSection } from "@/widgets/registry";
 import { ProfileSnapshotHero } from "@/widgets/ProfileSnapshotHero";
+import { Avatar } from "@/widgets/Avatar";
 import { AnchorRail } from "@/app/AnchorRail";
 
 /**
@@ -17,7 +20,12 @@ export function Dashboard() {
   const navigate = useNavigate();
   const range = useDashboardStore((s) => s.range);
   const setRange = useDashboardStore((s) => s.setRange);
+  const { snapshot, isError, errorCode, refetch } = useSnapshot(handle);
   const revealedCount = useProgressiveReveal(DASHBOARD_SECTIONS.length);
+
+  if (isError) {
+    return <ProviderErrorScreen handle={handle} code={errorCode ?? "unavailable"} onRetry={refetch} />;
+  }
 
   return (
     <div className="pb-32">
@@ -29,9 +37,12 @@ export function Dashboard() {
             className="flex min-w-0 items-center gap-2.5 text-sm font-semibold text-ink hover:opacity-80"
             title="New analysis"
           >
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent-faint text-[13px] text-accent">
-              {handle.charAt(0).toUpperCase()}
-            </span>
+            <Avatar
+              handle={handle}
+              hue={snapshot?.profile.avatarHue}
+              url={snapshot?.profile.avatarUrl}
+              className="size-7 text-[13px]"
+            />
             <span className="truncate">@{handle}</span>
           </Link>
           <div className="flex-1" />
@@ -91,6 +102,58 @@ export function Dashboard() {
       </div>
 
       <AnchorRail sections={DASHBOARD_SECTIONS.map(({ id, title }) => ({ id, title }))} />
+    </div>
+  );
+}
+
+const ERROR_COPY: Record<ProviderErrorCode, { title: string; message: string }> = {
+  private: {
+    title: "This profile is private",
+    message: "Only public Instagram profiles can be analyzed. Ask the account owner to connect it directly in a future version.",
+  },
+  not_found: {
+    title: "Profile not found",
+    message: "No Instagram profile exists with this handle — check the spelling and try again.",
+  },
+  rate_limited: {
+    title: "Instagram is rate-limiting requests",
+    message: "Too many analyses in a short time. Wait a minute, then retry.",
+  },
+  unavailable: {
+    title: "Instagram data is temporarily unavailable",
+    message: "The public data source didn't respond. This usually passes — try again shortly.",
+  },
+  invalid_handle: {
+    title: "That doesn't look like a username",
+    message: "Handles use letters, numbers, dots and underscores only.",
+  },
+};
+
+function ProviderErrorScreen({
+  handle,
+  code,
+  onRetry,
+}: {
+  handle: string;
+  code: ProviderErrorCode;
+  onRetry: () => void;
+}) {
+  const copy = ERROR_COPY[code];
+  return (
+    <div className="flex min-h-dvh items-center justify-center px-6">
+      <div className="w-full max-w-md rounded-card bg-surface p-10 text-center shadow-card">
+        <p className="text-sm font-medium text-ink-3">@{handle}</p>
+        <h1 className="mt-2 text-xl font-semibold">{copy.title}</h1>
+        <p className="mt-2 text-sm leading-relaxed text-ink-2">{copy.message}</p>
+        <div className="mt-6 flex justify-center gap-3">
+          {code !== "private" && code !== "not_found" && (
+            <Button onClick={onRetry}>Try again</Button>
+          )}
+          <Link to="/">
+            <Button variant="secondary">New search</Button>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

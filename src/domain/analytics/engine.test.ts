@@ -92,7 +92,7 @@ describe("rankPosts", () => {
       post(3, 300, 0),
       post(4, 400, 0),
     ]);
-    const byLikes = new Map(ranked.map((r) => [r.post.metrics.likes.value, r]));
+    const byLikes = new Map(ranked.map((r) => [r.post.metrics.likes!.value, r]));
     expect(byLikes.get(400)!.percentile).toBe(100);
     expect(byLikes.get(100)!.percentile).toBe(25);
     expect(byLikes.get(300)!.engagement).toBe(300);
@@ -129,7 +129,7 @@ describe("computeAnalytics — posts", () => {
 
   it("ranks top and bottom and best-by-type", () => {
     expect(analytics.posts.top[0]!.post.type).toBe("reel"); // 330 engagement
-    expect(analytics.posts.bottom[0]!.post.metrics.likes.value).toBe(100);
+    expect(analytics.posts.bottom[0]!.post.metrics.likes!.value).toBe(100);
     expect(analytics.posts.bestByType.reel!.engagement).toBe(330);
     expect(analytics.posts.bestByType.image!.engagement).toBe(110);
   });

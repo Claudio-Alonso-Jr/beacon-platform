@@ -117,6 +117,7 @@ function PostColumn({
               <PostThumbnail
                 hue={entry.post.thumbnailHue}
                 type={entry.post.type}
+                url={entry.post.thumbnailUrl}
                 className="size-12 shrink-0"
               />
               <div className="min-w-0 flex-1">

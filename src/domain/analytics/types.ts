@@ -82,8 +82,8 @@ export interface EngagementTrendPoint {
   date: string; // bucket start, ISO date
   posts: number;
   avgEngagement: number;
-  avgLikes: number;
-  avgComments: number;
+  avgLikes?: number;
+  avgComments?: number;
   avgViews?: number;
   /** Percent, avgEngagement / followers. */
   engagementRate?: number;

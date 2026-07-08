@@ -50,7 +50,7 @@ export default function QuickMetricsWidget({ handle, range }: WidgetProps) {
           hero
           label="Posts Published"
           value={String(posts.count)}
-          state={engine.metricState("engagement")}
+          state={engine.metricState("followers")}
           delta={roundOpt(percentChange(posts.count, previous?.count))}
           note="In selected period"
         />

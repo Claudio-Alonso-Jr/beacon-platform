@@ -122,17 +122,26 @@ function GalleryCard({
       whileHover={{ y: -3 }}
       className="group relative block w-full overflow-hidden rounded-card text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
-      <PostThumbnail hue={post.thumbnailHue} type={post.type} className="aspect-square w-full rounded-none" />
+      <PostThumbnail
+        hue={post.thumbnailHue}
+        type={post.type}
+        url={post.thumbnailUrl}
+        className="aspect-square w-full rounded-none"
+      />
 
-      {/* hover veil with metrics */}
+      {/* hover veil with metrics — only metrics the provider exposed */}
       <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/65 via-black/10 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
         <div className="flex items-center gap-3 text-[13px] font-medium text-white">
-          <span className="numeric flex items-center gap-1">
-            <HeartIcon size={13} /> {formatCompact(post.metrics.likes.value)}
-          </span>
-          <span className="numeric flex items-center gap-1">
-            <CommentIcon size={13} /> {formatCompact(post.metrics.comments.value)}
-          </span>
+          {post.metrics.likes && (
+            <span className="numeric flex items-center gap-1">
+              <HeartIcon size={13} /> {formatCompact(post.metrics.likes.value)}
+            </span>
+          )}
+          {post.metrics.comments && (
+            <span className="numeric flex items-center gap-1">
+              <CommentIcon size={13} /> {formatCompact(post.metrics.comments.value)}
+            </span>
+          )}
           {post.metrics.views && (
             <span className="numeric flex items-center gap-1">
               <EyeIcon size={13} /> {formatCompact(post.metrics.views.value)}
@@ -145,9 +154,11 @@ function GalleryCard({
       <div className="flex items-center justify-between gap-2 bg-surface px-1.5 py-2">
         <span className="numeric flex items-center gap-2 text-xs text-ink-3">
           {formatDate(post.postedAt)}
-          <span className="flex items-center gap-0.5 text-ink-2">
-            <HeartIcon size={11} /> {formatCompact(post.metrics.likes.value)}
-          </span>
+          {post.metrics.likes && (
+            <span className="flex items-center gap-0.5 text-ink-2">
+              <HeartIcon size={11} /> {formatCompact(post.metrics.likes.value)}
+            </span>
+          )}
         </span>
         <span className="text-xs font-medium text-ink-2">{POST_TYPE_LABEL[post.type]}</span>
       </div>

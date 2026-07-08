@@ -15,7 +15,8 @@ export default function PublishingOverviewWidget({ handle, range }: WidgetProps)
   if (!engine || !analytics) return <OverviewSkeleton />;
 
   const { posts, publishing } = analytics;
-  const state = engine.metricState("engagement");
+  // cadence facts derive from post dates, not engagement metrics
+  const state = engine.metricState("followers");
   const mix = contentMix(posts.byType, posts.count);
 
   return (

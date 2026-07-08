@@ -1,20 +1,24 @@
+import { useState } from "react";
 import type { PostType } from "@/domain/types";
 import { CarouselIcon, ImageIcon, PlayIcon } from "@/design-system/primitives";
 import { cn } from "@/design-system/cn";
 
 /**
- * Seeded-gradient thumbnail treatment for dev/mock data; live providers
- * replace the gradient with a cached image, the frame stays identical.
+ * Post artwork: the provider's real thumbnail when available, with the
+ * seeded gradient as mock artwork and load-error fallback.
  */
 export function PostThumbnail({
   hue,
   type,
+  url,
   className,
 }: {
   hue: number;
   type: PostType;
+  url?: string;
   className?: string;
 }) {
+  const [failed, setFailed] = useState(false);
   const Icon = type === "reel" ? PlayIcon : type === "carousel" ? CarouselIcon : ImageIcon;
   return (
     <div
@@ -25,7 +29,17 @@ export function PostThumbnail({
           hsl(${(hue + 40) % 360} 45% 52%) 100%)`,
       }}
     >
-      <Icon size={18} className="absolute right-2.5 top-2.5 text-white/90 drop-shadow" />
+      {url !== undefined && !failed && (
+        <img
+          src={url}
+          alt=""
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={() => setFailed(true)}
+          className="absolute inset-0 size-full object-cover"
+        />
+      )}
+      <Icon size={18} className="absolute right-2.5 top-2.5 z-10 text-white/90 drop-shadow" />
     </div>
   );
 }

@@ -11,11 +11,12 @@ import type {
   TypeStats,
 } from "./types";
 
-/** Objective per-post engagement: likes + comments (+ saves + shares when measured). */
+/** Objective per-post engagement: sum of the interaction metrics the
+ *  provider actually exposed (hidden metrics contribute nothing). */
 export function engagementOf(post: Post): number {
   return (
-    post.metrics.likes.value +
-    post.metrics.comments.value +
+    (post.metrics.likes?.value ?? 0) +
+    (post.metrics.comments?.value ?? 0) +
     (post.metrics.saves?.value ?? 0) +
     (post.metrics.shares?.value ?? 0)
   );
@@ -133,8 +134,8 @@ function computeTypeStats(posts: Post[]): Record<PostType, TypeStats> {
       avgEngagement: ofType.length > 0
         ? ofType.reduce((a, p) => a + engagementOf(p), 0) / ofType.length
         : undefined,
-      avgLikes: mean((p) => p.metrics.likes.value),
-      avgComments: mean((p) => p.metrics.comments.value),
+      avgLikes: mean((p) => p.metrics.likes?.value),
+      avgComments: mean((p) => p.metrics.comments?.value),
       avgViews: mean((p) => p.metrics.views?.value),
     };
   }
@@ -164,22 +165,20 @@ function computeTrend(posts: Post[], followers: number, days: number): Engagemen
   return [...buckets.entries()]
     .map(([date, bucketPosts]) => {
       const n = bucketPosts.length;
-      const sum = (pick: (p: Post) => number | undefined): number =>
-        bucketPosts.reduce((a, p) => a + (pick(p) ?? 0), 0);
-      const viewValues = bucketPosts
-        .map((p) => p.metrics.views?.value)
-        .filter((v): v is number => v !== undefined);
+      const meanOf = (pick: (p: Post) => number | undefined): number | undefined => {
+        const values = bucketPosts.map(pick).filter((v): v is number => v !== undefined);
+        return values.length > 0
+          ? values.reduce((a, b) => a + b, 0) / values.length
+          : undefined;
+      };
       const avgEngagement = bucketPosts.reduce((a, p) => a + engagementOf(p), 0) / n;
       return {
         date,
         posts: n,
         avgEngagement,
-        avgLikes: sum((p) => p.metrics.likes.value) / n,
-        avgComments: sum((p) => p.metrics.comments.value) / n,
-        avgViews:
-          viewValues.length > 0
-            ? viewValues.reduce((a, b) => a + b, 0) / viewValues.length
-            : undefined,
+        avgLikes: meanOf((p) => p.metrics.likes?.value),
+        avgComments: meanOf((p) => p.metrics.comments?.value),
+        avgViews: meanOf((p) => p.metrics.views?.value),
         engagementRate: followers > 0 ? (avgEngagement / followers) * 100 : undefined,
       };
     })
@@ -212,8 +211,8 @@ function computeAverages(posts: Post[]): PostAverages {
     return values.reduce((a, b) => a + b, 0) / values.length;
   };
   return {
-    likes: mean((p) => p.metrics.likes.value),
-    comments: mean((p) => p.metrics.comments.value),
+    likes: mean((p) => p.metrics.likes?.value),
+    comments: mean((p) => p.metrics.comments?.value),
     views: mean((p) => p.metrics.views?.value),
     reach: mean((p) => p.metrics.reach?.value),
     saves: mean((p) => p.metrics.saves?.value),
@@ -222,9 +221,11 @@ function computeAverages(posts: Post[]): PostAverages {
 }
 
 function computeMedians(posts: Post[]): PostMedians {
+  const available = (pick: (p: Post) => number | undefined): number[] =>
+    posts.map(pick).filter((v): v is number => v !== undefined);
   return {
-    likes: median(posts.map((p) => p.metrics.likes.value)),
-    comments: median(posts.map((p) => p.metrics.comments.value)),
+    likes: median(available((p) => p.metrics.likes?.value)),
+    comments: median(available((p) => p.metrics.comments?.value)),
   };
 }
 

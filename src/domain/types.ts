@@ -27,12 +27,14 @@ export interface Post {
   caption: string;
   hashtags: string[];
   permalink: string;
-  /** Mock/dev: a seeded hue drives the placeholder artwork; live providers
-   *  replace this with a cached thumbnail URL. */
+  /** Fallback gradient hue (mock artwork + real-thumbnail error fallback). */
   thumbnailHue: number;
+  /** Real thumbnail from the provider; absent on mock data. */
+  thumbnailUrl?: string;
   metrics: {
-    likes: MetricValue;
-    comments: MetricValue;
+    /** Absent when the account hides like counts — never fabricated as 0. */
+    likes?: MetricValue;
+    comments?: MetricValue;
     views?: MetricValue;
     reach?: MetricValue;
     saves?: MetricValue;
@@ -47,8 +49,10 @@ export interface Profile {
   website?: string;
   isVerified: boolean;
   category?: string;
-  /** Seeded hue for the avatar treatment (mock/dev). */
+  /** Seeded hue for the avatar treatment (fallback when no photo). */
   avatarHue: number;
+  /** Real profile picture from the provider; absent on mock data. */
+  avatarUrl?: string;
 }
 
 export interface TimeSeriesPoint {
