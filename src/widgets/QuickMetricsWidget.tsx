@@ -97,8 +97,9 @@ function StripMetric({
   state: "measured" | "observed" | "locked";
   note?: string;
 }) {
+  // whole numbers everywhere averages appear — matches by-type & engagement widgets
   const display =
-    state === "locked" ? undefined : value === undefined ? "—" : formatCompact(value);
+    state === "locked" ? undefined : value === undefined ? "—" : formatCompact(Math.round(value));
   return (
     <KpiCard
       label={label}

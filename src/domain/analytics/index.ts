@@ -14,7 +14,10 @@ import { computePublishing } from "./cadence";
  */
 export function computeAnalytics(snapshot: Snapshot, range: TimeRange): PeriodAnalytics {
   const days = RANGE_DAYS[range];
-  const now = new Date();
+  // Periods are anchored to the snapshot's CAPTURE time, never the wall
+  // clock — every widget sees identical windows, and the same snapshot
+  // yields the same analytics tomorrow (true determinism).
+  const now = new Date(snapshot.capturedAt);
   const currentStart = rangeStart(range, now).getTime();
   const previousStart = currentStart - days * 86_400_000;
 
@@ -75,8 +78,12 @@ export { followerEvolution, rangeStart } from "./growth";
 export * from "./types";
 export * from "./format";
 
-/** Posts inside the selected period (kept for gallery filtering). */
-export function postsInRange(posts: Post[], range: TimeRange): Post[] {
-  const cutoff = rangeStart(range).getTime();
+/**
+ * Posts inside the selected period. Prefer consuming `PeriodAnalytics.posts`
+ * (already filtered and anchored); when using this directly, pass the
+ * snapshot's capture time as `now` so windows stay consistent.
+ */
+export function postsInRange(posts: Post[], range: TimeRange, now = new Date()): Post[] {
+  const cutoff = rangeStart(range, now).getTime();
   return posts.filter((p) => new Date(p.postedAt).getTime() >= cutoff);
 }

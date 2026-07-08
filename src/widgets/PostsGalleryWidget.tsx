@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import type { WidgetProps } from "./types";
 import type { Post } from "@/domain/types";
 import { useAnalytics } from "@/data/useAnalytics";
-import { formatCompact, formatDate, postsInRange } from "@/domain/analytics";
+import { formatCompact, formatDate } from "@/domain/analytics";
 import {
   CommentIcon,
   EyeIcon,
@@ -28,14 +28,16 @@ export default function PostsGalleryWidget({ handle, range }: WidgetProps) {
   // changing the period resets pagination — stale "show more" depth is confusing
   useEffect(() => setVisibleCount(PAGE_SIZE), [range]);
 
+  // the engine's period set, ordered chronologically — the gallery never
+  // filters on its own, so its count always matches every other widget
   const posts = useMemo(
     () =>
-      snapshot
-        ? [...postsInRange(snapshot.posts, range)].sort(
-            (a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime(),
-          )
+      analytics
+        ? analytics.posts.ranked
+            .map((r) => r.post)
+            .sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime())
         : [],
-    [snapshot, range],
+    [analytics],
   );
 
   if (!snapshot || !engine || !analytics) {

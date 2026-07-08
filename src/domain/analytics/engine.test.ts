@@ -212,6 +212,30 @@ describe("engagement analytics", () => {
   });
 });
 
+describe("period anchoring", () => {
+  it("anchors windows to the snapshot capture time, not the wall clock", () => {
+    // snapshot captured months ago; posts dated relative to THAT moment
+    const captured = "2026-01-31T12:00:00.000Z";
+    const at = (iso: string, likes: number): Post => ({
+      ...post(0, likes, 0),
+      id: `abs-${iso}`,
+      postedAt: iso,
+    });
+    const snap: Snapshot = {
+      ...snapshot([
+        at("2026-01-30T10:00:00.000Z", 100), // 1 day before capture → in 7d window
+        at("2026-01-10T10:00:00.000Z", 50),  // 21 days before capture → outside 7d
+      ]),
+      capturedAt: captured,
+    };
+    const a = computeAnalytics(snap, "7d");
+    expect(a.posts.count).toBe(1);
+    expect(a.posts.averages.likes).toBe(100);
+    // and the 30d window catches both
+    expect(computeAnalytics(snap, "30d").posts.count).toBe(2);
+  });
+});
+
 describe("publishing analytics", () => {
   const posts = [
     post(1, 10, 1),
