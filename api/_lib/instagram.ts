@@ -23,41 +23,80 @@ export class ProviderHttpError extends Error {
   }
 }
 
-const ENDPOINT = "https://i.instagram.com/api/v1/users/web_profile_info/?username=";
-const IG_APP_ID = "936619743392459"; // Instagram web client app id (public)
-const USER_AGENT =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
+/* ——— vendor adapters ———
+ * One contract: handle → RawUser (Instagram's web-profile shape).
+ * Every vendor below returns that shape, so mapping stays identical and
+ * switching providers is a matter of which adapter is selected. */
 
-export async function fetchPublicSnapshot(handle: string): Promise<Snapshot> {
-  let response: Response;
-  try {
-    response = await fetch(ENDPOINT + encodeURIComponent(handle), {
-      headers: { "x-ig-app-id": IG_APP_ID, "user-agent": USER_AGENT, accept: "*/*" },
-    });
-  } catch {
-    throw new ProviderHttpError("unavailable", "Network error reaching Instagram");
-  }
+type VendorAdapter = (handle: string) => Promise<RawUser>;
 
+/** ScrapeCreators (https://scrapecreators.com) — returns IG's web shape verbatim. */
+const scrapeCreatorsAdapter =
+  (apiKey: string): VendorAdapter =>
+  async (handle) => {
+    const response = await safeFetch(
+      `https://api.scrapecreators.com/v1/instagram/profile?handle=${encodeURIComponent(handle)}`,
+      { headers: { "x-api-key": apiKey, accept: "application/json" } },
+    );
+    if (response.status === 404) throw new ProviderHttpError("not_found");
+    if (response.status === 429) throw new ProviderHttpError("rate_limited");
+    if (response.status === 401 || response.status === 402 || response.status === 403) {
+      throw new ProviderHttpError("unavailable", `Vendor auth/credits issue (${response.status})`);
+    }
+    if (!response.ok) throw new ProviderHttpError("unavailable", `Vendor returned ${response.status}`);
+    const payload = await safeJson(response);
+    const user = (payload as { data?: { user?: RawUser | null } })?.data?.user;
+    if (!user) throw new ProviderHttpError("not_found");
+    return user;
+  };
+
+/** Instagram's own public web endpoint — keyless; often login-walled from datacenter IPs. */
+const directAdapter: VendorAdapter = async (handle) => {
+  const response = await safeFetch(
+    `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`,
+    {
+      headers: {
+        "x-ig-app-id": "936619743392459", // Instagram web client app id (public)
+        "user-agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+        accept: "*/*",
+      },
+    },
+  );
   if (response.status === 404) throw new ProviderHttpError("not_found");
   if (response.status === 429) throw new ProviderHttpError("rate_limited");
-  if (response.status === 401 || response.status === 403) {
-    // datacenter IPs are often login-walled — surface as provider unavailability
-    throw new ProviderHttpError("unavailable", `Instagram returned ${response.status}`);
-  }
   if (!response.ok) throw new ProviderHttpError("unavailable", `Instagram returned ${response.status}`);
+  const payload = await safeJson(response);
+  const user = (payload as { data?: { user?: RawUser | null } })?.data?.user;
+  if (!user) throw new ProviderHttpError("not_found");
+  return user;
+};
 
-  let payload: unknown;
+function resolveAdapter(): VendorAdapter {
+  const key = process.env.SCRAPECREATORS_API_KEY;
+  return key ? scrapeCreatorsAdapter(key) : directAdapter;
+}
+
+export async function fetchPublicSnapshot(handle: string): Promise<Snapshot> {
+  const user = await resolveAdapter()(handle);
+  if (user.is_private) throw new ProviderHttpError("private");
+  return mapUser(handle, user);
+}
+
+async function safeFetch(url: string, init: RequestInit): Promise<Response> {
   try {
-    payload = await response.json();
+    return await fetch(url, init);
+  } catch {
+    throw new ProviderHttpError("unavailable", "Network error reaching provider");
+  }
+}
+
+async function safeJson(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
   } catch {
     throw new ProviderHttpError("unavailable", "Unexpected response format");
   }
-
-  const user = (payload as { data?: { user?: RawUser | null } })?.data?.user;
-  if (!user) throw new ProviderHttpError("not_found");
-  if (user.is_private) throw new ProviderHttpError("private");
-
-  return mapUser(handle, user);
 }
 
 /* ——— mapping ——— */
