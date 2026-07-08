@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+/* ————————————————————————————————————————————————
+   Instagram Performance Dashboard — Design Tokens
+   Semantic tokens; dark mode is a variable swap.
+   ———————————————————————————————————————————————— */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* surfaces */
+  --ds-canvas: #f7f7f8;
+  --ds-surface: #ffffff;
+  --ds-surface-2: #f1f1f4; /* subtle inset surfaces (chips, more-metrics strip) */
+
+  /* text */
+  --ds-ink: #17171a;
+  --ds-ink-2: #6e6e76;
+  --ds-ink-3: #9b9ba4; /* faint labels, axis text */
+
+  /* accent family (single accent; charts are variations) */
+  --ds-accent: #5b5bd6;
+  --ds-accent-soft: #8b8be8;
+  --ds-accent-faint: #b7b7f2;
+  --ds-accent-wash: #5b5bd60d; /* 5% wash for hero card gradient */
+
+  /* semantics — deltas only */
+  --ds-positive: #1da07a;
+  --ds-negative: #d6455b;
+
+  /* lines */
+  --ds-hairline: #17171a14; /* 8% ink — chart grid + rare dividers */
+
+  /* elevation */
+  --ds-shadow-card: 0 1px 3px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.06);
+  --ds-shadow-overlay: 0 4px 12px rgb(0 0 0 / 0.08), 0 24px 64px rgb(0 0 0 / 0.16);
+}
+
+.dark {
+  --ds-canvas: #0b0b0e;
+  --ds-surface: #16161a;
+  --ds-surface-2: #1e1e24;
+
+  --ds-ink: #f4f4f5;
+  --ds-ink-2: #a0a0ab;
+  --ds-ink-3: #6b6b76;
+
+  --ds-accent: #7c7cf0;
+  --ds-accent-soft: #9d9df4;
+  --ds-accent-faint: #bebef8;
+  --ds-accent-wash: #7c7cf014;
+
+  --ds-positive: #2bc496;
+  --ds-negative: #f06a7e;
+
+  --ds-hairline: #f4f4f514;
+
+  /* dark elevation = surface tint, shadows nearly disappear */
+  --ds-shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --ds-shadow-overlay: 0 8px 40px rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  /* colors → utilities like bg-surface, text-ink-2, border-hairline */
+  --color-canvas: var(--ds-canvas);
+  --color-surface: var(--ds-surface);
+  --color-surface-2: var(--ds-surface-2);
+  --color-ink: var(--ds-ink);
+  --color-ink-2: var(--ds-ink-2);
+  --color-ink-3: var(--ds-ink-3);
+  --color-accent: var(--ds-accent);
+  --color-accent-soft: var(--ds-accent-soft);
+  --color-accent-faint: var(--ds-accent-faint);
+  --color-positive: var(--ds-positive);
+  --color-negative: var(--ds-negative);
+  --color-hairline: var(--ds-hairline);
+
+  /* type */
+  --font-sans: "Inter", "InterVariable", ui-sans-serif, system-ui, sans-serif;
+
+  /* radius — cards 16, controls 10, chips full */
+  --radius-card: 1rem;
+  --radius-control: 0.625rem;
+
+  /* elevation */
+  --shadow-card: var(--ds-shadow-card);
+  --shadow-overlay: var(--ds-shadow-overlay);
+
+  /* section rhythm (§7.6): 96 desktop / 48 tablet / 40 mobile */
+  --spacing-section: 6rem;
+  --spacing-section-md: 3rem;
+  --spacing-section-sm: 2.5rem;
+}
+
+/* base */
+html {
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: var(--ds-canvas);
+  color: var(--ds-ink);
+}
+
+/* tabular numerals for every metric value */
+.numeric {
+  font-feature-settings: "tnum", "cv11";
+  letter-spacing: -0.01em;
+}
+
+/* KPI hero numerals */
+.kpi-value {
+  font-feature-settings: "tnum", "cv11";
+  letter-spacing: -0.03em;
+}
+
+/* ————— print (§9.4): premium executive report ————— */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  /* force light tokens regardless of theme */
+  :root,
+  .dark {
+    --ds-canvas: #ffffff;
+    --ds-surface: #ffffff;
+    --ds-surface-2: #f1f1f4;
+    --ds-ink: #17171a;
+    --ds-ink-2: #6e6e76;
+    --ds-ink-3: #9b9ba4;
+    --ds-accent: #5b5bd6;
+    --ds-accent-soft: #8b8be8;
+    --ds-accent-faint: #b7b7f2;
+    --ds-accent-wash: #5b5bd60d;
+    --ds-positive: #1da07a;
+    --ds-negative: #d6455b;
+    --ds-hairline: #17171a14;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  /* shadows print as smudges — swap for a hairline frame */
+  .shadow-card,
+  .shadow-overlay {
+    box-shadow: none !important;
+    border: 1px solid #e7e7ec;
+  }
+
+  /* each chapter is a self-contained report section; the 96px screen
+     rhythm becomes a small top inset at the start of each printed page */
+  [data-dashboard-section] {
+    break-before: page;
+    margin-top: 0 !important;
+    padding-top: 6mm;
+  }
+
+  /* never split a card across pages */
+  .rounded-card {
+    break-inside: avoid;
+  }
+
+  /* scroll containers (calendar heatmap) must not clip on paper */
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+}
+
+/* reduced motion: kill non-essential animation globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
